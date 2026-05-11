@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Spa para gatinhos 🐾</title>
+    <style>
+        body { 
+            background: url('imagens/spacat.jpeg') no-repeat center center fixed; 
+            background-size: cover;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        #status-mensagem {
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            display: none;
+            font-weight: bold;
+        }
+
+        /* CONTAINER PRINCIPAL QUE COLOCA LADO A LADO */
+        .main-layout {
+            display: flex;
+            justify-content: center; /* Centraliza o bloco todo */
+            align-items: flex-start; /* Alinha o topo das caixas */
+            gap: 30px; /* Espaço entre o formulário e as tabelas */
+            padding: 100px 20px 20px 20px; /* Padding superior para não bater na mensagem */
+            flex-wrap: wrap; /* Para telas menores, ele joga um pra baixo do outro */
+        }
+
+        /* LADO ESQUERDO: Formulário (Home) */
+        .container-home { 
+            background: rgba(255, 255, 255, 0.9); 
+            padding: 25px; 
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 320px;
+            text-align: center;
+        }
+
+        /* LADO DIREITO: Dashboard de Colunas */
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: 250px 250px; /* Largura fixa para as duas colunas */
+            gap: 20px; 
+        }
+
+        .coluna { 
+            background: rgba(255, 255, 255, 0.85); 
+            padding: 20px; 
+            border-radius: 12px; 
+            min-height: 400px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .coluna h4 { 
+            border-bottom: 3px solid #6f42c1; 
+            padding-bottom: 10px; 
+            color: #333;
+            text-transform: uppercase;
+            margin-top: 0;
+        }
+
+        /* Cards de Pets */
+        .card { 
+            background: white; 
+            padding: 12px; 
+            margin: 10px auto;
+            width: 90%;
+            border-radius: 8px; 
+            border-left: 5px solid #6f42c1; 
+            text-align: left;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        }
+
+        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #6f42c1; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #5a32a3; }
+    </style>
+</head>
+<body>
+
+    <div id="status-mensagem"></div>
+
+    <div class="main-layout">
+        
+        <div class="container-home">
+            <h2 style="color: #333; margin-bottom: 5px;">Spa para Gatos 🐱</h2>
+            <p style="font-size: 0.8em; color: #666; margin-bottom: 20px;">Operação: 08:00 às 18:00</p>
+            
+            <input type="text" id="gato" placeholder="Nome do Gatinho">
+            <input type="datetime-local" id="data">
+            <button onclick="enviarParaPython()">Confirmar Agendamento</button>
+        </div>
+
+        <div class="dashboard">
+            <div class="coluna">
+                <h4>📋 Em Fila</h4>
+                <div id="lista-espera"></div>
+            </div>
+
+            <div class="coluna">
+                <h4>🛁 Atendimento</h4>
+                <div id="lista-atendimento"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:8000/api/agendamentos";
+
+        function mostrarMensagem(texto, erro = false) {
+            const div = document.getElementById('status-mensagem');
+            div.innerText = texto;
+            div.style.display = 'block';
+            div.style.backgroundColor = erro ? "#f8d7da" : "#d4edda";
+            div.style.color = erro ? "#721c24" : "#155724";
+            setTimeout(() => { div.style.display = 'none'; }, 5000);
+        }
+
+        async function enviarParaPython() {
+            const payload = {
+                cliente: document.getElementById('gato').value,
+                horario: document.getElementById('data').value
+            };
+
+            try {
+                const response = await fetch(API, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+
+                if (response.ok) {
+                    mostrarMensagem(`${res.mensagem} Finalização às ${res.finalizacao}`);
+                    atualizarLista();
+                } else {
+                    mostrarMensagem(res.detail, true);
+                }
+            } catch (e) {
+                mostrarMensagem("Erro: Servidor Python desligado", true);
+            }
+        }
+
+        async function atualizarLista() {
+            try {
+                const res = await fetch(API);
+                const dados = await res.json();
+                
+                const formatar = (lista) => lista.map(d => `
+                    <div class="card">
+                        <b>${d.cliente}</b><br>
+                        <small>${new Date(d.horario).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                    </div>`).join('');
+
+                document.getElementById('lista-espera').innerHTML = formatar(dados.aguardando);
+                document.getElementById('lista-atendimento').innerHTML = formatar(dados.em_atendimento);
+            } catch (e) {
+                console.log("Erro ao buscar lista.");
+            }
+        }
+
+        // Atualização automática a cada 10 segundos
+        setInterval(atualizarLista, 10000);
+        atualizarLista();
+    </script>
+</body>
+</html>
