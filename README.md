@@ -1,4 +1,4 @@
-# 🐱 Spa Cat - Algoritmos Gulosos (G59)
+# 🐱 Spa Cat - Algoritmos Ambiciosos (G59)
 
 Este projeto aplica conceitos de **Projeto de Algoritmos** para gerenciar a fila de um Spa de Gatos.
 
