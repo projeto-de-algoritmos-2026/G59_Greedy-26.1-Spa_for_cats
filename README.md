@@ -1,5 +1,8 @@
 # 🐱 Spa Cat - Algoritmos Ambiciosos (G59)
 
+### 🎬 Vídeo de Apresentação
+[Clique aqui para assistir à explicação do projeto no YouTube](https://youtu.be/V76UBWo6GFQ)
+
 Este projeto aplica conceitos de **Projeto de Algoritmos** para gerenciar a fila de um Spa de Gatos.
 
 ### 🧠 Algoritmos Implementados:
